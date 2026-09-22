@@ -1,0 +1,3 @@
+document.querySelectorAll('.project,.statement,.about-grid').forEach(el=>el.classList.add('reveal'));
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('on')}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
