@@ -1,12 +1,8 @@
-# GO DOA Portfolio
+# GO DOA Portfolio v2
+GitHub Pages용 정적 포트폴리오입니다.
 
-Static portfolio site for GitHub Pages.
+## 이미지 교체
+`index.html`의 `placeholder` 영역을 실제 `<img src="assets/파일명.jpg">`로 교체하거나, 작업 이미지를 보내주면 다음 버전에서 배치하면 됩니다.
 
-## Publish
-1. Upload `index.html`, `style.css`, `script.js`, and the `assets` folder to the repository root.
-2. GitHub repository → Settings → Pages.
-3. Source: Deploy from a branch → `main` / `(root)` → Save.
-4. The site will be available at `https://doa00.github.io/portfolio/` after deployment.
-
-## Replace images
-Add images to `assets/` and update the corresponding `<img src="assets/...">` paths in `index.html`.
+## GitHub Pages
+저장소 루트에 index.html / style.css / script.js / assets 폴더가 위치해야 합니다.
