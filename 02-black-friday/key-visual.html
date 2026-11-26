@@ -1,0 +1,220 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>@import url("https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Archivo:wdth,wght@100..125,700..900&display=swap");html,body{margin:0;background:#000;height:100%;overflow:hidden}#adlvBF,#adlvBF *{box-sizing:border-box}#adlvBF{--coral:#D8484C;--bg:#E8D8C5;height:100%;line-height:1.5;letter-spacing:-.03em}#adlvBF p,#adlvBF h1{margin:0;padding:0}#adlvBF .bfBanner{position:relative;display:flex;flex-direction:column;width:100%;overflow:hidden;background:#000}
+#adlvBF .bfBanner canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#adlvBF .bfBanner .bfForegroundCanvas{z-index:5;pointer-events:none}
+#adlvBF .bfBnText{position:relative;z-index:7;padding:clamp(48px,6vw,62px) 16px 0;text-align:center;color:#fff;pointer-events:none}
+#adlvBF .bfBnLabel{font-family:'Archivo','Arial Black',Arial,sans-serif;font-stretch:112%;font-weight:800;font-size:clamp(11px,2.6vw,16px);letter-spacing:.06em;text-transform:uppercase;line-height:1.1;text-shadow:0 2px 14px rgba(0,0,0,.7)}
+#adlvBF .bfBnTitle{margin:clamp(4px,1.2vw,8px) 0 0;font-family:'Abril Fatface','Playfair Display',Georgia,'Times New Roman',serif;font-weight:400;font-size:clamp(44px,13vw,76px);line-height:.96;letter-spacing:-.065em;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.65)}
+#adlvBF .bfBnTitle span{display:block;transform:scaleX(.92);transform-origin:center}
+#adlvBF .bfBnDate{margin-top:clamp(10px,2.6vw,16px);font-family:'Archivo',Arial,sans-serif;font-weight:700;font-size:clamp(13px,3.6vw,17px);letter-spacing:.04em;color:#f3e9e2;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+#adlvBF .bfBnClock{margin-top:clamp(6px,1.6vw,10px);font-size:clamp(15px,4.4vw,22px);font-weight:700;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.7);font-variant-numeric:tabular-nums}
+#adlvBF .bfBnClock b{margin-left:.35em;font-family:'Archivo',Arial,sans-serif;font-stretch:112%;font-weight:900;color:var(--coral)}
+#adlvBF .bfBnClock.soon b{color:var(--bg)}
+#adlvBF .bfBnClock.done b{margin:0;color:var(--bg)}
+#adlvBF .bfBnStage{position:relative;z-index:1;width:min(100%,680px);aspect-ratio:480/150;margin:clamp(-10px,-1.6vw,-4px) auto 0;pointer-events:none}
+
+#adlvBF .bfBanner{height:100%;justify-content:center}#adlvBF .bfBnText{padding-top:0}#adlvBF .bfBnTitle{font-size:clamp(36px,12vw,76px)}#adlvBF .bfBnStage{flex-shrink:0}</style><div id="adlvBF"><section class="bfBanner" id="adlv-pixel-candle" aria-label="블랙프라이데이 배너. 픽셀 곰돌이와 선물상자, 폭죽 애니메이션">
+    <canvas></canvas>
+    <canvas class="bfForegroundCanvas" aria-hidden="true"></canvas>
+    <div class="bfBnText">
+      <p class="bfBnLabel">Up to 80% off</p>
+      <h1 class="bfBnTitle"><span>Black</span><span>Friday</span></h1>
+      <p class="bfBnDate" data-bn-date>11.11 – 11.23</p>
+      
+    </div>
+    <div class="bfBnStage" aria-hidden="true"></div>
+  </section></div><script>
+(function(){
+'use strict';
+
+window.__adlvBear=[
+'................C...',
+'.....AABBABCBBBABA..',
+'....AAAAAAAABBABABC.',
+'....BABAAAAABBBAAB..',
+'....DCAAAAAAABBABA..',
+'......AAAABBBBBBB...',
+'......AABAABABBAD...',
+'......AAAABBBBADD...',
+'.......AABBBBBBDA...',
+'.......ABBBBBB.D....',
+'.......B.BDB.DD.....',
+'.....CBCD.DDDDDD....',
+'....ABBBBBDDDBAD....',
+'...AAAAAAABBBBBBBA..',
+'...ABAAAABBBBBBBBB..',
+'..AAABAAABBBBABBBBD.',
+'.AAABBABABABBCDABBD.',
+'.ABBBDAAABBBBC.BBBD.',
+'.ABBDD.AABABBDDDBA..',
+'...DD..ABBBBB.......',
+'.......BBBBBBD......',
+'........ABB.DD......',
+'.........ABD........',
+'....................'
+];
+
+var host=document.getElementById('adlv-pixel-candle');
+if(!host||host.dataset.ready)return;
+var canvas=host.querySelector('canvas'),ctx=canvas&&canvas.getContext('2d');
+var fgCanvas=host.querySelector('.bfForegroundCanvas'),fgCtx=fgCanvas&&fgCanvas.getContext('2d');
+var stage=host.querySelector('.bfBnStage');
+if(!ctx||!stage)return;
+host.dataset.ready='1';
+
+var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var RED='#B72A38',CREAM='#E8D8C5';
+var start=performance.now(),running=false;
+
+/* 480 x 300 장면 중 아래쪽 150줄(선물상자 + 곰)만 잘라서 사용 → 글씨와 곰 사이 거리를 좁힘 */
+var CROP_Y=150,CROP_H=150;
+
+var scene=document.createElement('canvas');scene.width=480;scene.height=300;
+var fgScene=document.createElement('canvas');fgScene.width=480;fgScene.height=300;
+var g=scene.getContext('2d');
+
+function R(x,y,w,h,c){g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)))}
+function pixels(rows,x,y,u,p){for(var a=0;a<rows.length;a++)for(var b=0;b<rows[a].length;b++)if(p[rows[a][b]])R(x+b*u,y+a*u,u,u,p[rows[a][b]])}
+function ease(n){n=Math.max(0,Math.min(1,n));return 1-Math.pow(1-n,3)}
+function sparkle(x,y,c,s){s=Math.max(2,Math.round(s*.42));R(x-s/2,y,s,1,c);R(x,y-s/2,1,s,c)}
+
+function bear(x,y,u){
+  var p={A:'#F2DCB6',B:'#DDB782',C:'#B88B57',D:'#78502F'};
+  g.save();
+  g.fillStyle='rgba(0,0,0,.52)';g.shadowColor='rgba(0,0,0,.85)';g.shadowBlur=10*u/3;
+  g.beginPath();g.ellipse(x+10*u,y+23*u,10*u,2.6*u,0,0,Math.PI*2);g.fill();
+  g.restore();
+  pixels(window.__adlvBear,x,y,u,p);
+}
+function gift(x,y,w,h,accent){
+  g.save();
+  g.fillStyle='rgba(0,0,0,.6)';g.shadowColor='#000';g.shadowBlur=11;
+  g.beginPath();g.ellipse(x+w/2,y+h+3,w*.62,5,0,0,Math.PI*2);g.fill();g.restore();
+  R(x+3,y+5,w,h-5,'#29262C');
+  R(x+w-5,y+6,5,h-6,'#111015');
+  R(x+3,y+5,3,h-5,'#81747D');
+  R(x,y,w,8,'#464149');
+  R(x,y,w,2,'#A295A0');
+  R(x+w*.43,y+2,w*.14,h-2,accent);
+  R(x+2,y+h*.52,w-4,Math.max(3,w*.1),accent);
+  R(x+w*.43,y+2,2,h-2,'#F08C99');
+  R(x+w*.3,y-7,w*.2,9,accent);
+  R(x+w*.5,y-7,w*.2,9,accent);
+  R(x+w*.4,y-5,w*.2,8,'#9B3443');
+}
+
+function paintScene(){
+  g=scene.getContext('2d');g.clearRect(0,0,480,300);
+  R(0,0,480,300,'#020102');
+  for(var i=0;i<88;i++){var x=(i*173+19)%480,y=(i*67+11)%192;R(x,y,i%11===0?2:1,i%11===0?2:1,i%5===0?'#A6333F':'#4E242B')}
+  for(var j=0;j<14;j++){var sx=(j*107+47)%480,sy=(j*53+20)%175;sparkle(sx,sy,j%3?RED:CREAM,j%4===0?7:4)}
+  R(0,247,480,53,'#120B0E');R(0,247,480,2,'#342127');R(0,267,480,33,'#1C1014');
+  for(var f=0;f<35;f++){R((f*79+13)%480,270+(f*19)%28,2,1,f%3?'#2B171C':'#4A2028')}
+}
+function paintForegroundScene(){
+  g=fgScene.getContext('2d');g.clearRect(0,0,480,300);
+  gift(13,207,45,40,'#5D2430');gift(60,226,32,28,'#7A2937');gift(93,219,34,34,'#45212B');
+  gift(360,218,37,36,'#742633');gift(399,204,47,46,'#54232D');gift(448,227,29,26,'#792C38');
+  gift(38,190,24,22,'#58212C');gift(421,182,26,23,'#71313A');
+  gift(155,242,36,38,'#B63D50');gift(284,243,40,39,'#C04759');
+  gift(193,267,26,25,'#A9374A');gift(263,268,29,25,'#B83C51');
+  bear(134,211,3);bear(208,191,4);bear(298,211,3);
+}
+paintScene();paintForegroundScene();
+
+var topStars=[[.08,.08],[.22,.19],[.37,.12],[.71,.09],[.89,.17],[.95,.3],[.11,.34],[.81,.36],[.52,.35],[.34,.41],[.68,.44]];
+var bursts=[
+  [.13,.10,36],[.50,.08,34],[.85,.13,38],
+  [.29,.22,31],[.72,.26,35],[.08,.34,32],[.92,.37,34],
+  [.24,.47,34],[.76,.49,36],[.50,.40,29],
+  [.11,.59,32],[.89,.61,34],[.37,.64,30],[.64,.67,31],
+  [.18,.76,29],[.81,.77,31],[.50,.81,27],
+  [.09,.86,26],[.91,.86,26],[.32,.84,24],[.69,.85,24]
+];
+var fgKey='';
+
+function draw(elapsed){
+  var hr=host.getBoundingClientRect();
+  var w=Math.max(1,hr.width),h=Math.max(1,hr.height),dpr=Math.min(window.devicePixelRatio||1,2);
+  var cw=Math.round(w*dpr),ch=Math.round(h*dpr);
+  if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw;canvas.height=ch}
+  ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=false;
+  ctx.fillStyle='#020102';ctx.fillRect(0,0,cw,ch);
+
+  /* 장면이 놓일 영역(스테이지) 좌표 */
+  var sr=stage.getBoundingClientRect();
+  var S={x:Math.round((sr.left-hr.left)*dpr),y:Math.round((sr.top-hr.top)*dpr),w:Math.round(sr.width*dpr),h:Math.round(sr.height*dpr)};
+
+  /* 넓은 화면에서도 바닥이 끊기지 않게 좌우로 연장 */
+  var k=S.h/CROP_H;
+  var gy=Math.round(S.y+(247-CROP_Y)*k);
+  ctx.fillStyle='#120B0E';ctx.fillRect(0,gy,cw,ch-gy);
+  ctx.fillStyle='#342127';ctx.fillRect(0,gy,cw,Math.max(1,Math.round(2*k)));
+  ctx.fillStyle='#1C1014';var gy2=Math.round(S.y+(267-CROP_Y)*k);ctx.fillRect(0,gy2,cw,ch-gy2);
+  ctx.drawImage(scene,0,CROP_Y,480,CROP_H,S.x,S.y,S.w,S.h);
+
+  /* 위쪽 별 */
+  var unit=Math.max(1,Math.round(cw/450));
+  topStars.forEach(function(d,i){
+    ctx.fillStyle=i%3===0?'#FF5363':i%3===1?'#B72A38':'#FFF0DB';
+    var px=Math.round(cw*d[0]),py=Math.round(ch*d[1]);
+    ctx.fillRect(px-unit,py,unit*3,unit);ctx.fillRect(px,py-unit,unit,unit*3);
+  });
+
+  /* 화면 전체에 터지는 픽셀 폭죽 */
+  var scale=Math.max(.8,Math.min(w,520)/390);
+  bursts.forEach(function(b,i){
+    var delay=(i*.23)%3.5;
+    var age=reduced?1.0:((elapsed-delay+140)%3.5);
+    if(age>1.65)return;
+    var grow=ease(Math.min(1,age/.58));
+    var fade=age<.75?1:Math.max(0,1-(age-.75)/.90);
+    var radius=b[2]*dpr*grow*scale;
+    var px=cw*b[0],py=ch*b[1];
+    ctx.globalAlpha=fade;
+    for(var q=0;q<32;q++){
+      var ang=Math.PI*2*q/32+i*.19;
+      var dist=radius*(q%4===0?1:q%3===0?.82:.68);
+      ctx.fillStyle=['#FF5363','#D8484C','#FFF0DB','#B72A38','#FF8B8E'][((q+i)%5)];
+      var dot=Math.max(2,Math.round(dpr*(q%5===0?3:2)));
+      ctx.fillRect(Math.round(px+Math.cos(ang)*dist),Math.round(py+Math.sin(ang)*dist),dot,dot);
+      if(q%3===0){
+        var d2=Math.max(2,Math.round(dpr*1.5));
+        ctx.fillRect(Math.round(px+Math.cos(ang)*dist*.52),Math.round(py+Math.sin(ang)*dist*.52),d2,d2);
+      }
+    }
+    ctx.globalAlpha=1;
+  });
+
+  /* 전경(곰 + 선물상자) : 크기/위치가 바뀔 때만 다시 그림 */
+  var key=[cw,ch,S.x,S.y,S.w,S.h].join('x');
+  if(fgCtx&&fgKey!==key){
+    fgKey=key;
+    fgCanvas.width=cw;fgCanvas.height=ch;
+    fgCtx.setTransform(1,0,0,1,0,0);fgCtx.imageSmoothingEnabled=false;fgCtx.clearRect(0,0,cw,ch);
+    fgCtx.drawImage(fgScene,0,CROP_Y,480,CROP_H,S.x,S.y,S.w,S.h);
+  }
+}
+
+function frame(now){
+  if(!running)return;
+  draw((now-start)/1000);
+  requestAnimationFrame(frame);
+}
+function setRun(v){
+  if(reduced)return;
+  if(v&&!running){running=true;requestAnimationFrame(frame)}
+  else if(!v){running=false}
+}
+function redraw(){draw(reduced?9:(performance.now()-start)/1000)}
+
+redraw();
+window.addEventListener('resize',redraw);
+if(window.ResizeObserver)new ResizeObserver(redraw).observe(host);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(redraw);
+if(!reduced){
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(es){setRun(es[0].isIntersecting)},{threshold:.02}).observe(host);
+  }else{setRun(true)}
+}
+})();
+</script></html>
